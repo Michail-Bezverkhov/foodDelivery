@@ -1,4 +1,7 @@
 window.addEventListener('DOMContentLoaded', () => {
+
+    // TABS
+
     const tabs = document.querySelectorAll('.tabheader__item'),
         tabsContent = document.querySelectorAll('.tabcontent'),
         tabsParent = document.querySelector('.tabheader__items');
@@ -33,6 +36,8 @@ window.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+
+    // TIMER
 
     const deadline = '2023-04-22';
 
@@ -85,5 +90,167 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     setClock('.timer', deadline);
+
+
+    // MODAL
+
+    const contactBtns = document.querySelectorAll('[data-modal]'),
+        modal = document.querySelector('.modal'),
+        closeModalBtn = document.querySelector('[data-close]');
+
+    function openModal() {
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        clearInterval(modalTimerId);
+    };
+
+    contactBtns.forEach((btn) => {
+        btn.addEventListener('click', openModal);
+    });
+
+
+
+    function closeModal() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    closeModalBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Escape' && modal.style.display == 'block') {
+            closeModal();
+        }
+    });
+
+    const modalTimerId = setTimeout(openModal, 5000);
+
+    function showModalByScroll() {
+        if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight) {
+            openModal();
+            window.removeEventListener('scroll', showModalByScroll);
+        }
+    };
+
+    window.addEventListener('scroll', showModalByScroll);
+
+    // MENU CARDS TEMPLATE
+
+    class MenuCard {
+        constructor(img, title, descr, price, parentSelector, ...cssClasses) {
+            this.img = img;
+            this.title = title;
+            this.descr = descr;
+            this.price = price;
+            this.cssClasses = cssClasses;
+            this.parent = document.querySelector(parentSelector);
+            this.createCard();
+        }
+
+        createCard() {
+            const newCard = document.createElement('div');
+            if (this.cssClasses.length === 0) {
+                this.newCard =  'menu__item';
+                newCard.classList.add(this.newCard);
+            } else {
+                this.cssClasses.forEach(className => newCard.classList.add(className));
+            }
+
+            newCard.innerHTML = `
+            <img src="${this.img}" alt="menu picture">
+            <h3 class="menu__item-subtitle">${this.title}</h3>
+            <div class="menu__item-descr">${this.descr}</div>
+            <div class="menu__item-divider"></div>
+            <div class="menu__item-price">
+                <div class="menu__item-cost">Цена:</div>
+                <div class="menu__item-total"><span>${this.price}</span> грн/день</div>
+            </div>
+        `;
+            this.parent.appendChild(newCard);
+        }
+    }
+
+    new MenuCard(
+        '/img/tabs/vegy.jpg',
+        `Меню "Фитнес"`,
+        `Меню "Фитнес" - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!`,
+        229,
+        '.menu__field .container'
+    );
+    new MenuCard(
+        '/img/tabs/elite.jpg',
+
+        `Меню “Премиум”`,
+        `В меню “Премиум” мы используем не только красивый дизайн упаковки, но и качественное исполнение блюд. Красная рыба, морепродукты, фрукты - ресторанное меню без похода в ресторан!`,
+        550,
+        '.menu__field .container'
+    );
+    new MenuCard(
+        '/img/tabs/post.jpg',
+        `Меню "Постное"`,
+        `Меню “Постное” - это тщательный подбор ингредиентов: полное отсутствие продуктов животного происхождения, молоко из миндаля, овса, кокоса или гречки, правильное количество белков за счет тофу и импортных вегетарианских стейков.`,
+        430,
+        '.menu__field .container'
+    );
+
+        //FORMS
+
+        const forms = document.querySelectorAll('form');
+        
+        const message = {
+            loading: 'Загрузка',
+            success: 'Спасибо! Скоро мы с вами свяжемся',
+            failure: 'Что-то пошло не так...'
+        };
+
+        forms.forEach(item => {
+            postData(item);
+        });
+
+        function postData(form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const statusMessage = document.createElement('div');
+                statusMessage.classList.add('status');
+                statusMessage.textContent = message.loading;
+                form.append(statusMessage);
+
+                const request = new XMLHttpRequest();
+                request.open('POST', 'server.php');
+
+                request.setRequestHeader('Content-type', 'application/json');
+                const formData = new FormData(form);
+                
+                const object = {};
+
+                formData.forEach(function(value, key){
+                    object[key] = value;
+                });
+
+                const json = JSON.stringify(object);
+
+                request.send(json);
+
+                request.addEventListener('load', () => {
+                    if (request.status === 200) {
+                        console.log(request.response);
+                        statusMessage.textContent = message.success;
+                        form.reset();
+                        setTimeout (() => {
+                            statusMessage.remove();
+                        }, 2000);
+                    } else {
+                        statusMessage.textContent = message.failure;
+                    }
+                });
+            });
+        }
 
 });
